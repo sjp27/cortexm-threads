@@ -1,10 +1,11 @@
 #![no_std]
 #![no_main]
-
+extern crate jlink_rtt;
 extern crate panic_halt;
+use core::fmt::Write;
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
+//use cortex_m_semihosting::hprintln;
 
 use f3::{
     hal::{i2c::I2c, prelude::*, stm32f30x},
@@ -21,6 +22,9 @@ static mut SENSOR: Option<Lsm303dlhc> = None;
 fn main() -> ! {
     let cp = cortex_m::Peripherals::take().unwrap();
     let dp = stm32f30x::Peripherals::take().unwrap();
+    let mut output = jlink_rtt::Output::new();
+
+    writeln!(output, "Init").unwrap();  
 
     let mut rcc = dp.RCC.constrain();
     let leds = Leds::new(dp.GPIOE.split(&mut rcc.ahb));
@@ -55,7 +59,12 @@ fn main() -> ! {
 }
 
 pub fn user_task_1() -> ! {
+    let mut _counter = 0;
+    let mut output = jlink_rtt::Output::new();
+
     loop {
+        _counter += 1;
+        writeln!(output, "T1:{}", _counter).unwrap();  
         if unsafe { LEDS.is_some() } {
             let leds = unsafe { LEDS.as_mut().unwrap() };
             for curr in 0..8 {
@@ -71,11 +80,17 @@ pub fn user_task_1() -> ! {
 }
 
 pub fn user_task_2() -> ! {
+    let mut _counter = 0;
+    let mut output = jlink_rtt::Output::new();
+
     loop {
+        _counter += 1;
+        writeln!(output, "T2:{}", _counter).unwrap();  
         if unsafe { SENSOR.is_some() } {
             let sensor = unsafe { SENSOR.as_mut().unwrap() };
             let x = sensor.mag();
-            let _ = hprintln!("{:?}", x);
+            //let _ = hprintln!("{:?}", x);
+            writeln!(output, "{:?}", x).unwrap();  
             sleep(50);
         }
     }
